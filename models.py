@@ -9,10 +9,9 @@ class Project(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255))
     description = db.Column(db.String(255))
-    image = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
-    findings = db.relationship('Findings', backref='project')
+    findings = db.relationship('Findings', backref='project', cascade='all, delete-orphan')
     def to_dict(self):
         return {
             'id': self.id,
