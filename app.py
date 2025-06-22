@@ -3,6 +3,7 @@ from flask_migrate import Migrate
 from flask import Flask, request
 from flask_cors import CORS
 from dotenv import load_dotenv
+from datetime import datetime
 import os
 from flask_jwt_extended import (
     JWTManager, create_access_token, jwt_required, get_jwt_identity
@@ -23,10 +24,17 @@ jwt = JWTManager(app)
 def index():
     return "Welcome to the API"
 
-@app.route('/projects', methods=['GET'])
+@app.route('/projects', methods=['GET', 'POST'])
 def projects():
-    projects = Project.query.all()
-    return [project.to_dict() for project in projects]
+    if request.method == 'GET':
+        projects = Project.query.all()
+        return [project.to_dict() for project in projects]
+    elif request.method == 'POST':
+        data = request.get_json()
+        project = Project(name=data['name'], description=data['description'],created_at=data['created_at'])
+        db.session.add(project)
+        db.session.commit()
+        return {'message': 'Project created successfully'}, 201
 
 @app.route('/project/<int:project_id>', methods=['GET', 'POST', 'PUT', 'DELETE'])
 def project(project_id):
@@ -35,22 +43,15 @@ def project(project_id):
         return {'error': 'Project not found'}, 404
     if request.method == 'GET':
         return project.to_dict()
-    elif request.method == 'POST':
-        data = request.get_json()
-        project.name = data['name']
-        project.description = data['description']
-        db.session.commit()
-        return {'message': 'Project created successfully'}, 200
+    
     elif request.method == 'PUT':
         data = request.get_json()
         if 'name' in data:
             project.name = data['name']
         if 'description' in data:
             project.description = data['description']
-        if 'created_at' in data:
-            project.created_at = data['created_at']
-        if 'updated_at' in data:
-            project.updated_at = data['updated_at']
+                
+        project.updated_at = datetime.now()
         db.session.commit()
         return {'message': 'Project updated successfully'}, 200
     elif request.method == 'DELETE':
@@ -58,6 +59,36 @@ def project(project_id):
         db.session.commit()
         return {'message': 'Project deleted successfully'}, 200
     
+@app.route('/categories', methods=['GET', 'POST'])
+def categories():
+    if request.method == 'GET':
+        categories = Category.query.all()
+        return [category.to_dict() for category in categories]
+    elif request.method == 'POST':
+        data = request.get_json()
+        category = Category(name=data['name'])
+        db.session.add(category)
+        db.session.commit()
+        return {'message': 'Category created successfully'}, 201
+@app.route('/category/<int:category_id>', methods=['GET', 'PUT', 'DELETE'])
+def category(category_id):
+    category = Category.query.get(category_id)
+    if not category:
+        return {'error': 'Category not found'}, 404
+    if request.method == 'GET':
+        return category.to_dict()
+    elif request.method == 'PUT':
+        data = request.get_json()
+        category.name = data['name']
+        category.updated_at = datetime.now()
+        db.session.commit()
+        return {'message': 'Category updated successfully'}, 200
+    elif request.method == 'DELETE':
+        db.session.delete(category)
+        db.session.commit()
+        return {'message': 'Category deleted successfully'}, 200
+
+
 
 if __name__ == '__main__':
     app.run(debug=True,port=6060)

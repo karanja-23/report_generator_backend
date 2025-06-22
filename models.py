@@ -8,7 +8,7 @@ class Project(db.Model, SerializerMixin):
     __tablename__ = 'projects'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255))
-    description = db.Column(db.String(255))
+    description = db.Column(db.JSON)
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     findings = db.relationship('Findings', backref='project', cascade='all, delete-orphan')
@@ -17,7 +17,6 @@ class Project(db.Model, SerializerMixin):
             'id': self.id,
             'name': self.name,
             'description': self.description,
-            'image': self.image,
             'created_at': self.created_at,
             'updated_at': self.updated_at,
             'findings': [finding.to_dict() for finding in self.findings]
