@@ -89,6 +89,35 @@ def category(category_id):
         return {'message': 'Category deleted successfully'}, 200
 
 
+@app.route('/severities', methods=['GET', 'POST'])
+def severities():
+    if request.method == 'GET':
+        severities = Severity.query.all()
+        return [severity.to_dict() for severity in severities]
+    elif request.method == 'POST':
+        data = request.get_json()
+        severity = Severity(name=data['name'])
+        db.session.add(severity)
+        db.session.commit()
+        return {'message': 'Severity created successfully'}, 201
 
+@app.route('/severity/<int:severity_id>', methods=['GET', 'PUT', 'DELETE'])
+def severity(severity_id):
+    severity = Severity.query.get(severity_id)
+    if not severity:
+        return {'error': 'Severity not found'}, 404
+    if request.method == 'GET':
+        return severity.to_dict()
+    elif request.method == 'PUT':
+        data = request.get_json()
+        severity.name = data['name']
+        severity.updated_at = datetime.now()
+        db.session.commit()
+        return {'message': 'Severity updated successfully'}, 200
+    elif request.method == 'DELETE':
+        db.session.delete(severity)
+        db.session.commit()
+        return {'message': 'Severity deleted successfully'}, 200
+    
 if __name__ == '__main__':
     app.run(debug=True,port=6060)

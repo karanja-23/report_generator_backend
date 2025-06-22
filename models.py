@@ -26,7 +26,7 @@ class Findings(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
     title = db.Column(db.String(255))
-    description = db.Column(db.String(255))
+    description = db.Column(db.JSON)
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
