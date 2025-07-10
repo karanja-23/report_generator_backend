@@ -3,6 +3,9 @@ from sqlalchemy_serializer import SerializerMixin
 from datetime import datetime
 db = SQLAlchemy()
 import base64
+from werkzeug.utils import secure_filename
+from io import BytesIO
+
 
 class Project(db.Model, SerializerMixin):
     __tablename__ = 'projects'
@@ -26,7 +29,7 @@ class Findings(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
     title = db.Column(db.String(255))
-    description = db.Column(db.String(255))
+    description = db.Column(db.JSON)
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
@@ -102,3 +105,12 @@ class Severity(db.Model, SerializerMixin):
             'updated_at': self.updated_at,
             'findings': [finding.shallow_to_dict() for finding in self.findings]
         }
+class Image (db.Model, SerializerMixin):
+    __tablename__ = 'images'
+    id = db.Column(db.Integer, primary_key=True)
+    filename=db.Column(db.String(255))
+    content_type=db.Column(db.String(255))
+    data=db.Column(db.LargeBinary)
+    finding_id = db.Column(db.Integer, db.ForeignKey('findings.id'),nullable=True)
+    uploaded_at = db.Column(db.DateTime, default=datetime.now)
+    
