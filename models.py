@@ -114,3 +114,25 @@ class Image (db.Model, SerializerMixin):
     finding_id = db.Column(db.Integer, db.ForeignKey('findings.id'),nullable=True)
     uploaded_at = db.Column(db.DateTime, default=datetime.now)
     
+class Users(db.Model, SerializerMixin):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255))
+    email = db.Column(db.String(255))
+    password = db.Column(db.String(255))
+    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
+    roles = db.relationship('Roles', backref='users')
+    
+
+class Roles(db.Model, SerializerMixin):
+    __tablename__ = 'roles'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255))
+    users = db.relationship('Users', backref='roles')
+    
+    
+class Permissions(db.Model, SerializerMixin):
+    __tablename__ = 'permissions'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255))
+    roles = db.relationship('Roles', backref='permissions')
