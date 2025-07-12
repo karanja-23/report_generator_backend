@@ -1,4 +1,4 @@
-from models import db, Findings, Category, Status, Severity, Project, Image
+from models import db, Findings, Category, Status, Severity, Project, Image, Users,Roles,Permissions
 from flask_migrate import Migrate
 from flask import Flask, request, jsonify, url_for, send_file
 from flask_cors import CORS
@@ -194,6 +194,127 @@ def get_image(image_id):
     image = Image.query.get_or_404(image_id)
     return send_file(BytesIO(image.data), mimetype=image.content_type)
 
+@app.route('/api/deleteImage/<int:image_id>', methods=['DELETE'])
+def delete_image(image_id):
+    image = Image.query.get_or_404(image_id)
+    db.session.delete(image)
+    db.session.commit()
+    return jsonify({'success': 1}), 200
 
+@app.route('/users', methods=['GET', 'POST'])
+def users():
+    if request.method == 'GET':
+        users = Users.query.all()
+        return [user.to_dict() for user in users]
+    elif request.method == 'POST':
+        data = request.get_json()
+        user = Users(name=data['name'], email=data['email'], password=data['password'], role_id=data['role_id'])
+        db.session.add(user)
+        db.session.commit()
+        return {'message': 'User created successfully'}, 201
+
+@app.route('/user/<int:user_id>', methods=['GET', 'PUT', 'DELETE'])
+def user(user_id):
+    user = Users.query.get(user_id)
+    if not user:
+        return {'error': 'User not found'}, 404
+    if request.method == 'GET':
+        return user.to_dict()
+    elif request.method == 'PUT':
+        data = request.get_json()
+        user.name = data['name']
+        user.email = data['email']
+        user.password = data['password']
+        user.role_id = data['role_id']
+        user.updated_at = datetime.now()
+        db.session.commit()
+        return {'message': 'User updated successfully'}, 200
+    elif request.method == 'DELETE':
+        db.session.delete(user)
+        db.session.commit()
+        return {'message': 'User deleted successfully'}, 200
+    
+@app.route('/roles', methods=['GET', 'POST'])
+def roles():
+    if request.method == 'GET':
+        roles = Roles.query.all()
+        return [role.to_dict() for role in roles]
+    elif request.method == 'POST':
+        data = request.get_json()
+        role = Roles(name=data['name'])
+        db.session.add(role)
+        db.session.commit()
+        return {'message': 'Role created successfully'}, 201
+    
+@app.route('/role/<int:role_id>', methods=['GET', 'PUT', 'DELETE'])
+def role(role_id):
+    role = Roles.query.get(role_id)
+    if not role:
+        return {'error': 'Role not found'}, 404
+    if request.method == 'GET':
+        return role.to_dict()
+    elif request.method == 'PUT':
+        data = request.get_json()
+        role.name = data['name']
+        db.session.commit()
+        return {'message': 'Role updated successfully'}, 200
+    elif request.method == 'DELETE':
+        db.session.delete(role)
+        db.session.commit()
+        return {'message': 'Role deleted successfully'}, 200
+    
+@app.route('/permissions', methods=['GET', 'POST'])
+def permissions():
+    if request.method == 'GET':
+        permissions = Permissions.query.all()
+        return [permission.to_dict() for permission in permissions]
+    elif request.method == 'POST':
+        data = request.get_json()
+        permission = Permissions(name=data['name'])
+        db.session.add(permission)
+        db.session.commit()
+        return {'message': 'Permission created successfully'}, 201
+    
+@app.route('/permission/<int:permission_id>', methods=['GET', 'PUT', 'DELETE'])
+def permission(permission_id):
+    permission = Permissions.query.get(permission_id)
+    if not permission:
+        return {'error': 'Permission not found'}, 404
+    if request.method == 'GET':
+        return permission.to_dict()
+    elif request.method == 'PUT':
+        data = request.get_json()
+        permission.name = data['name']
+        db.session.commit()
+        return {'message': 'Permission updated successfully'}, 200
+    elif request.method == 'DELETE':
+        db.session.delete(permission)
+        db.session.commit()
+        return {'message': 'Permission deleted successfully'}, 200
+    
+@app.route('/roles/<int:role_id>/permissions', methods=['GET', 'POST'])
+def role_permissions(role_id):
+    role = Roles.query.get(role_id)
+    if not role:
+        return {'error': 'Role not found'}, 404
+
+    if request.method == 'GET':
+        return [permission.to_dict() for permission in role.permissions]
+
+    elif request.method == 'POST':
+        data = request.get_json()
+        if not data or 'permission_id' not in data:
+            return {'error': 'permission_id is required'}, 400
+
+        permission = Permissions.query.get(data['permission_id'])
+        if not permission:
+            return {'error': 'Permission not found'}, 404
+
+        if permission in role.permissions:
+            return {'message': 'Permission already assigned to role'}, 200
+
+        role.permissions.append(permission)
+        db.session.commit()
+        return {'message': 'Permission added to role successfully'}, 201
 if __name__ == '__main__':
     app.run(debug=True,port=6060)

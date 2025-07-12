@@ -121,6 +121,14 @@ class Users(db.Model, SerializerMixin):
     email = db.Column(db.String(255))
     password = db.Column(db.String(255))
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'email': self.email,
+            'role': self.role.to_dict() if self.role else None
+        }
 
     role = db.relationship('Roles', back_populates='users')
      
@@ -141,6 +149,12 @@ class Roles(db.Model, SerializerMixin):
         back_populates='roles'
     )       
     users = db.relationship('Users', back_populates='role')
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'permissions': [permission.to_dict() for permission in self.permissions]
+        }
 class Permissions(db.Model, SerializerMixin):
     __tablename__ = 'permissions'
     id = db.Column(db.Integer, primary_key=True)
@@ -151,4 +165,8 @@ class Permissions(db.Model, SerializerMixin):
         secondary=role_permissions,
         back_populates='permissions'
     )
-   
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name
+        }
