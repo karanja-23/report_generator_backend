@@ -113,4 +113,60 @@ class Image (db.Model, SerializerMixin):
     data=db.Column(db.LargeBinary)
     finding_id = db.Column(db.Integer, db.ForeignKey('findings.id'),nullable=True)
     uploaded_at = db.Column(db.DateTime, default=datetime.now)
+   
+class Users(db.Model, SerializerMixin):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255))
+    email = db.Column(db.String(255))
+    password = db.Column(db.String(255))
+    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'email': self.email,
+            'role': self.role.to_dict() if self.role else None
+        }
+
+    role = db.relationship('Roles', back_populates='users')
+     
+role_permissions = db.Table(
+    'role_permissions',
+    db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True),
+    db.Column('permission_id', db.Integer, db.ForeignKey('permissions.id'), primary_key=True)
+)
+
+class Roles(db.Model, SerializerMixin):
+    __tablename__ = 'roles'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255))
+
+    permissions = db.relationship(
+        'Permissions',
+        secondary=role_permissions,
+        back_populates='roles'
+    )       
+    users = db.relationship('Users', back_populates='role')
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'permissions': [permission.to_dict() for permission in self.permissions]
+        }
+class Permissions(db.Model, SerializerMixin):
+    __tablename__ = 'permissions'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255))
+
+    roles = db.relationship(
+        'Roles',
+        secondary=role_permissions,
+        back_populates='permissions'
+    )
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name
+        }
