@@ -316,5 +316,28 @@ def role_permissions(role_id):
         role.permissions.append(permission)
         db.session.commit()
         return {'message': 'Permission added to role successfully'}, 201
+    
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    email = data['email']
+    password = data['password']
+    user = Users.query.filter_by(email=email).first()
+    if not user:
+        return {'error': 'User not found'}, 404
+    if user.password != password:
+        return {'error': 'Invalid password'}, 401
+    
+    access_token = create_access_token(identity=str(user.email))
+    return jsonify({'access_token': access_token}), 200
+
+@app.route('/protected',methods=['GET'])
+@jwt_required()
+def protected():
+    current_user = get_jwt_identity()
+    user = Users.query.filter_by(email=current_user).first()
+    if not user:
+        return {'error': 'User not found'}, 404
+    return user.to_dict()
 if __name__ == '__main__':
     app.run(debug=True,port=6060)
